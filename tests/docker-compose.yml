@@ -1,0 +1,57 @@
+version: "3.1"
+services:
+  proxy:
+    build: ..
+    depends_on:
+      - grafana
+      - pg_grafana
+    ports:
+      - 8000:8000
+    volumes:
+      - ./iam-proxy.yaml:/app/iam-proxy.yaml
+    # use env file for secrets
+    env_file:
+      - .env
+
+  pg_grafana:
+    image: postgres:15
+    container_name: pg_grafana
+    restart: always
+    environment:
+      POSTGRES_DB: my_grafana_db
+      POSTGRES_USER: my_grafana_user
+      POSTGRES_PASSWORD: my_grafana_pwd
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    container_name: grafana-iam-proxy
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=pg_grafana:5432
+      - GF_DATABASE_NAME=my_grafana_db
+      - GF_DATABASE_USER=my_grafana_user
+      - GF_DATABASE_PASSWORD=my_grafana_pwd
+      - GF_DATABASE_SSL_MODE=disable
+    ports:
+      - 3030:3000
+    volumes:
+      - ./grafana.ini:/etc/grafana/grafana.ini
+    depends_on:
+      - pg_grafana
+
+  # add a prometheus service
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - proxy
+

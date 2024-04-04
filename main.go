@@ -1,11 +1,13 @@
 package main
 
 import (
+	"header-rev-proxy/handlers"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 
+	"github.com/go-chi/chi"
 	"github.com/itzg/zapconfigs"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
@@ -28,16 +30,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+	r := chi.NewRouter()
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
-	http.HandleFunc(proxyConfig.Endpoint, func(w http.ResponseWriter, r *http.Request) {
-
-		r.Header.Set("X-WEBAUTH-USER", "kevcoxe")
+	r.HandleFunc(proxyConfig.Endpoint, func(w http.ResponseWriter, r *http.Request) {
+		// check for cookie header-rev-proxy-username if it exists, set X-WEBAUTH-USER header else redirect to /login
+		cookie, err := r.Cookie("header-rev-proxy-username")
+		if err != nil {
+			logger.Error("failed to get cookie")
+			r.Header.Set("X-WEBAUTH-USER", "unknown")
+		} else {
+			cookieValue := cookie.Value
+			r.Header.Set("X-WEBAUTH-USER", cookieValue)
+		}
 
 		proxy.ServeHTTP(w, r)
 	})
 
-	http.HandleFunc(proxyConfig.HealthCheckEndpoint, func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc(proxyConfig.HealthCheckEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(200)
 		_, err := w.Write([]byte("OK"))
@@ -48,7 +58,13 @@ func main() {
 		}
 	})
 
-	http.Handle(proxyConfig.MetricsEndpoint, promhttp.Handler())
+	r.Handle(proxyConfig.MetricsEndpoint, promhttp.Handler())
 
-	log.Fatal(http.ListenAndServe(proxyConfig.Bind, nil))
+	r.Get("/", handlers.HomeGetHandler)
+	r.Post("/login", handlers.LoginPostHandler)
+	log.Printf("Listening on Port %s\n", proxyConfig.Bind)
+	err = http.ListenAndServe(proxyConfig.Bind, r)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

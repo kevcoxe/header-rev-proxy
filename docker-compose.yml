@@ -1,14 +1,12 @@
 version: "3.1"
 services:
   proxy:
-    build: ..
+    build: .
     depends_on:
       - grafana
       - pg_grafana
     ports:
       - 8000:8000
-    volumes:
-      - ./iam-proxy.yaml:/app/iam-proxy.yaml
     # use env file for secrets
     env_file:
       - .env
@@ -38,7 +36,7 @@ services:
     ports:
       - 3030:3000
     volumes:
-      - ./grafana.ini:/etc/grafana/grafana.ini
+      - ./tests/grafana.ini:/etc/grafana/grafana.ini
     depends_on:
       - pg_grafana
 
@@ -49,7 +47,7 @@ services:
     ports:
       - 9090:9090
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./tests/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     depends_on:

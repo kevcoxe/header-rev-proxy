@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/kevcoxe/header-rev-proxy/components"
+	"header-rev-proxy/components"
 
 	"github.com/a-h/templ"
 )
@@ -27,5 +28,27 @@ func RenderView(w http.ResponseWriter, r *http.Request, view templ.Component, la
 }
 
 func HomeGetHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("HomeGetHandler")
 	RenderView(w, r, components.HomeView("hello, world!"), "/")
+}
+
+func TimePostHandler(w http.ResponseWriter, r *http.Request) {
+	clientTimeStr := r.FormValue("time")
+	err := components.Time(clientTimeStr).Render(r.Context(), w)
+	onError(w, err, "Internal server error", http.StatusInternalServerError)
+}
+
+func LoginPostHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+
+	// create a cookie, set the value, redirect to /grafana route
+	// set cookie path to /grafana
+	cookie := http.Cookie{
+		Name:  "header-rev-proxy-username",
+		Value: username,
+		Path:  "/grafana",
+	}
+	http.SetCookie(w, &cookie)
+
+	http.Redirect(w, r, "/grafana/", http.StatusSeeOther)
 }

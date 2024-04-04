@@ -1,9 +1,10 @@
-module github.com/kevcoxe/header-rev-proxy
+module header-rev-proxy
 
 go 1.21.6
 
 require (
 	github.com/a-h/templ v0.2.648
+	github.com/go-chi/chi v1.5.5
 	github.com/itzg/go-flagsfiller v1.14.0
 	github.com/itzg/zapconfigs v0.1.0
 	github.com/prometheus/client_golang v1.19.0

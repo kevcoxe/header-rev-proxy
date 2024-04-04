@@ -6,10 +6,27 @@ templ Time(time string) {
     hx-vals='js:{ "time": new Date().toLocaleTimeString() }'>{time}</div>
 }
 
+templ LoginForm() {
+<form class="flex-col items-center justify-center gap-4" method="post" action="/login">
+    <div>
+        <label for="username" class="text-light">Username:</label>
+        <input type="text" id="username" name="username" class="input" style="color: black" />
+    </div>
+    <div>
+        <label for="password" class="text-light">Password:</label>
+        <input type="password" id="password" name="password" class="input" style="color: black" />
+    </div>
+    <div>
+        <button type="submit" class="btn">Submit</button>
+    </div>
+</form>
+}
+
+
 templ HomeView(msg string) {
 @Header("/")
 <div class="flex-col items-center justify-center h-screen w-screen gap-4 inline-flex">
     <h1 class="text-center text-yellow text-[64px] font-medium capitalize">{msg}</h1>
-    @Time("--:--:--")
+    @LoginForm()
 </div>
 }

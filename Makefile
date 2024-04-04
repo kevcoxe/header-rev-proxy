@@ -1,8 +1,11 @@
 # Load environment variables from .env file
 include .env
 
-build:
+build: templ
 	docker-compose build
+
+templ:
+	templ generate
 
 # Define the start task
 start: build
